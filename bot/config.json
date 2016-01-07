@@ -1,0 +1,8 @@
+{
+  "credentials": {
+    "email": "example@text.com",
+    "password": "password"
+  },
+  "commandCharacter": "/",
+  "name": "Firstname Lastname"
+}
