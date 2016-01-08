@@ -48,13 +48,15 @@ module.exports.handler = (api, args, message) => {
         let intro = `Ambiguous statement. ` +
           `I found the following matches for ${search}:`;
 
-        let body = _.reduce(targets, (acc, user) => acc + '\n' + user.name, intro);
+        let body = _.reduce(targets, (acc, user) => acc + '\n' + user.name,
+                            intro);
         return api.sendMessage({body: body}, message.threadID);
       } else {
         let user = targets[0];
 
-        api.sendMessage({body: `Alright, removing ${user.name}'s ${perm} permissions`},
-                        message.threadID);
+        api.sendMessage({
+          body: `Alright, removing ${user.name}'s ${perm} powers`
+        }, message.threadID);
 
         Users.removePerm(globalPerm ? -1 : message.threadID, user.id,
                          perm);  
