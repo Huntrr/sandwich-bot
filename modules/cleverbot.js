@@ -7,6 +7,8 @@
  * - onMessage: Run whenever a non-command is entered in a channel
  */
 
+const _ = require('underscore');
+
 let listening = {};
 let canListen = false;
 

@@ -89,6 +89,8 @@ module.exports.handler = (api, args, message) => {
         let newName = args[0];
 
         Channels.setChannelName(message.threadID, newName, api);
+        api.sendMessage({body: `Setting name to "${newName}"`},
+                        message.threadID);
         break;
 
       case "setdesc":
@@ -105,6 +107,8 @@ module.exports.handler = (api, args, message) => {
         let newDesc = args.join(' ');
 
         Channels.setChannelDesc(message.threadID, newDesc);
+        api.sendMessage({body: `Setting description to "${newDesc}"`},
+                        message.threadID);
         break;
 
       case "getdesc":
@@ -121,6 +125,7 @@ module.exports.handler = (api, args, message) => {
         }
       
         Channels.setChannelPrivate(message.threadID, true);
+        api.sendMessage({body: "Making channel private"}, message.threadID);
         break;
 
       case "setpublic":
@@ -130,6 +135,7 @@ module.exports.handler = (api, args, message) => {
         }
       
         Channels.setChannelPrivate(message.threadID, false);
+        api.sendMessage({body: "Making channel public"}, message.threadID);
         break;
 
       case "setpassword":
@@ -140,10 +146,12 @@ module.exports.handler = (api, args, message) => {
       
         let newPass = "";
         if(args.length > 0) {
-          let newPass = args[0];
+          newPass = args[0];
+          console.log("NEW PASSWORD: " + newPass);
         }
 
         Channels.setChannelPassword(message.threadID, newPass);
+        api.sendMessage({body: "Setting password"}, message.threadID);
         break;
 
       default:

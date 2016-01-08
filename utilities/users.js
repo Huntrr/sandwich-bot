@@ -13,12 +13,12 @@ let EXECUTE = function (cb) {
 };
 
 EXECUTE((db) => {
-  db.collection('channels').find({ "threadID": -1 }).count((err, count) => {
+  db.collection('channels').find({_id: -1 }).count((err, count) => {
     if(err) return console.error(err);
 
     if(count < 1) {
       let obj = {
-        "threadID": -1,
+        _id: -1,
         "users": [
           {
             "userID": parseInt(config.owner) || 0,
@@ -45,7 +45,7 @@ module.exports.addThread = (threadID, ownerID, ownerName) => {
   ownerID = parseInt(ownerID);
   EXECUTE((db) => {
     let obj = {
-      "threadID": threadID,
+      _id: threadID,
       "users": [
         { 
           "userID": ownerID,
@@ -66,7 +66,7 @@ module.exports.addThread = (threadID, ownerID, ownerName) => {
 module.exports.removeThread = (threadID) => {
   threadID = parseInt(threadID);
   EXECUTE((db) => {
-    db.collection('channels').deleteMany({ "threadID": threadID },
+    db.collection('channels').deleteMany({_id: threadID },
                                          (err, results) => {
       console.log(results);
       db.close();
@@ -80,7 +80,7 @@ module.exports.addPerm = (threadID, userID, name, perm) => {
 
   EXECUTE((db) => {
     db.collection('channels').update({
-      "threadID": threadID,
+      _id: threadID,
       "users.userID": userID
     }, { $addToSet: { "users.$.perms": perm } }, (err, count) => {
       if(err) return console.error(err);
@@ -88,7 +88,7 @@ module.exports.addPerm = (threadID, userID, name, perm) => {
       count = count.result.nModified;
       if(count < 1) {
         console.log("ADDING USER");
-        db.collection('channels').update({ "threadID": threadID },
+        db.collection('channels').update({_id: threadID },
                                          { $addToSet: { "users": {
                                              "userID": userID,
                                              "name": name,
@@ -99,7 +99,7 @@ module.exports.addPerm = (threadID, userID, name, perm) => {
                                            count = count.result.nModified;
                                            if(count < 1) {
                                              let obj = {
-                                               "threadID": threadID,
+                                               _id: threadID,
                                                "users": [
                                                  { 
                                                    "userID": userID,
@@ -131,7 +131,7 @@ module.exports.removePerm = (threadID, userID, perm) => {
 
   EXECUTE((db) => {
     db.collection('channels').update({
-      "threadID": threadID,
+      _id: threadID,
       "users.userID": userID
     }, { $pull: { "users.$.perms": perm } }, (err, count) => {
       if(err) console.error(err);
@@ -147,7 +147,7 @@ module.exports.hasPerm = (threadID, userID, perm, cb) => {
   console.log(userID);
   EXECUTE((db) => {
     db.collection('channels').aggregate([
-      { $match: { $or: [ {"threadID": -1}, {"threadID": threadID} ] } },
+      { $match: { $or: [ {_id: -1}, {_id: threadID} ] } },
       { $unwind: "$users" },
       { $match: { "users.userID": userID } },
       { $unwind: "$users.perms" },
@@ -174,7 +174,7 @@ module.exports.listPerms = (threadID, userID, cb) => {
 
   EXECUTE((db) => {
     db.collection('channels').aggregate([
-      { $match: { $or: [ {"threadID": -1}, {"threadID": threadID} ] } },
+      { $match: { $or: [ {_id: -1}, {_id: threadID} ] } },
       { $unwind: "$users" },
       { $match: { "users.userID": userID } },
       { $unwind: "$users.perms" },
@@ -198,7 +198,7 @@ module.exports.listUsersWithPerm = (threadID, perm, cb) => {
 
   EXECUTE((db) => {
     db.collection('channels').aggregate([
-      { $match: { $or: [ {"threadID": -1}, {"threadID": threadID} ] } },
+      { $match: { $or: [ {_id: -1}, {_id: threadID} ] } },
       { $unwind: "$users" },
       { $unwind: "$users.perms" },
       { $match: { "users.perms": perm } },

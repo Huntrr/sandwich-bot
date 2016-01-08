@@ -25,25 +25,34 @@ module.exports.getChannelList = (cb) => {
     db.collection('channels').find({
       name: { $exists: true },
       $or: [ {hidden: { $exists: false }}, {hidden: false} ]
-    }, {name: 1}).toArray( (err, array) => {
+    }, {name: 1, desc: 1}).toArray( (err, array) => {
       if(err) return console.error(err);
 
-      cb(_.map(array, (chan) => chan.name));
+      cb(_.map(array, (chan) => `${chan.name} - ${chan.desc}`));
       db.close();
     });
   });
 }
 
 module.exports.getChannelName = (channelID, cb) => {
+  channelID = parseInt(channelID);
+  console.log(channelID);
+
   EXECUTE( (db) => {
-    cb(
-      db.collection('channels').findOne({ threadID: channelID }).name ||
-        '[ERROR: channel is closed and has no public name]'
-    );
+    db.collection('channels').findOne({ _id: channelID }, 
+      (err, channel) => {
+        if(err) return console.error(err);
+        if(channel && channel.name) {
+          cb(channel.name);
+        } else {
+          cb('[ERROR: channel is closed and has no public name]');
+        }
+    });
   });
 }
 
 module.exports.setChannelName = (channelID, newName, api) => {
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
     db.collection('channels').find({ name: newName }).count( (err, count) => {
       if(err) return console.error(err);
@@ -53,7 +62,7 @@ module.exports.setChannelName = (channelID, newName, api) => {
                               `named ${newName}`}, channelID);
       }
 
-      db.collection('channels').update({ threadID: channelID },
+      db.collection('channels').update({ _id: channelID },
                                        { $set: { name: newName } },
                                        (err, result) => {
                                          if(err) return console.error(err);
@@ -63,7 +72,7 @@ module.exports.setChannelName = (channelID, newName, api) => {
                                          if(result.result.nModified === 0) {
                                            // add the channel
                                            db.collection('channels').insertOne({
-                                             threadID: channelID,
+                                             _id: channelID,
                                              name: newName,
                                              hidden: true,
                                              users: []
@@ -75,17 +84,24 @@ module.exports.setChannelName = (channelID, newName, api) => {
 }
 
 module.exports.getChannelDesc = (channelID, cb) => {
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    cb(
-      db.collection('channels').findOne({ threadID: channelID }).desc ||
-        '[ERROR: no description for this channel]'
-    );
+    db.collection('channels').findOne({ _id: channelID }, 
+      (err, channel) => {
+        if(err) return console.error(err);
+        if(channel && channel.desc) {
+          cb(channel.desc);
+        } else {
+          cb('[ERROR: channel has no description]');
+        }
+    });
   });
 }
 
 module.exports.setChannelDesc = (channelID, newDesc) => {
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    db.collection('channels').update({ threadID: channelID },
+    db.collection('channels').update({ _id: channelID },
                                      { $set: { desc: newDesc } },
                                      (err, result) => {
                                        if(err) return console.error(err);
@@ -93,7 +109,7 @@ module.exports.setChannelDesc = (channelID, newDesc) => {
                                        if(result.result.nModified === 0) {
                                          // add the channel
                                          db.collection('channels').insertOne({
-                                           threadID: channelID,
+                                           _id: channelID,
                                            desc: newDesc,
                                            hidden: true,
                                            users: []
@@ -104,75 +120,91 @@ module.exports.setChannelDesc = (channelID, newDesc) => {
 }
 
 module.exports.setChannelPrivate = (channelID, hidden) => {
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    db.collection('channels').update({ threadID: channelID },
-                                     { $set: { hidden: hidden } }, db.close);
+    db.collection('channels').update({ _id: channelID },
+                                     { $set: { hidden: hidden } },
+                                     () => db.close());
   });
 }
 
 module.exports.setChannelPassword = (channelID, password) => {
+  channelID = parseInt(channelID);
+  console.log(password);
   EXECUTE( (db) => {
     if(password === undefined || password === "" || password === null) {
-      db.collection('channels').update({ threadID: channelID},
-                                       { $unset: { password: "" } }, db.close);
+      console.log("UNSETTING PASSWORD");
+      db.collection('channels').update({ _id: channelID},
+                                       { $unset: { password: "" } },
+                                       () => db.close());
     } else {
-      db.collection('channels').update({ threadID: channelID},
+      console.log("SETTING PASSWORD");
+      db.collection('channels').update({ _id: channelID},
                                        { $set: { password: password } },
-                                       db.close);
+                                       () => db.close());
     }
   });
 }
 
 module.exports.banFromChannel = (userID, channelID) => {
+  userID = parseInt(userID);
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    db.collection('channels').update({threadID: channelID},
+    db.collection('channels').update({_id: channelID},
                                      { $addToSet: { banned: userID }},
-                                     db.close);
+                                     () => db.close());
   });
 }
 
 module.exports.unbanFromChannel = (userID, channelID) => {
+  userID = parseInt(userID);
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    db.collection('channels').update({threadID: channelID},
-                                     {$pull: { banned: userID }}, db.close);
+    db.collection('channels').update({_id: channelID},
+                                     {$pull: { banned: userID }},
+                                     () => db.close());
   });
 }
 
 module.exports.joinChannel = (api, channelName, userID, password) => {
+  userID = parseInt(userID);
+
   EXECUTE( (db) => {
-    let channel = db.collection('channels').findOne({name: channelName});
+    db.collection('channels').findOne({name: channelName}, (err, channel) => {
+      if(!channel) {
+        db.close();
+        return api.sendMessage({body: `No channel named ${channelName}`},
+                               userID);
+      }
 
-    if(!channel) {
-      db.close();
-      return api.sendMessage({body: `No channel named ${channelName}`},
-                             userID);
-    }
+      if(_.contains(channel.banned, userID)) {
+        db.close();
+        return api.sendMessage(
+          {body: `Sorry, you've been banned from ${channelName}`}, userID
+        );
+      }
 
-    if(_.contains(channel.banned, userID)) {
-      db.close();
-      return api.sendMessage(
-        {body: `Sorry, you've been banned from ${channelName}`}, userID
-      );
-    }
+      if(!channel.password || channel.password === password) {
+        db.close();
+        api.sendMessage({body: `Joining ${channelName}`}, userID);
+        api.addUserToGroup(userID, channel._id, (err) => {
+          if(err) return api.sendMessage({body: `Error: ${err}`}, userID);
+        });
+      } else {
+        db.close();
+        let msg = password ? `Invalid password for ${channelName}` :
+          `Please enter a password while joining ${channelName}`;
 
-    if(!channel.password || channel.password === password) {
-      db.close();
-      api.sendMessage({body: `Joining ${channelName}`}, userID);
-      api.addUserToGroup(userID, channel.threadID, (err) => {
-        if(err) return api.sendMessage({body: `Error: ${err}`}, userID);
-      });
-    } else {
-      db.close();
-      let msg = password ? `Invalid password for ${channelName}` :
-        `Please enter a password while joining ${channelName}`;
-
-      return api.sendMessage({body: msg},
-                             userID);
-    }
+        return api.sendMessage({body: msg},
+                               userID);
+      }
+    });
   });
 }
 
 module.exports.leaveChannel = (api, channelID, userID) => {
+  userID = parseInt(userID);
+  channelID = parseInt(channelID);
   EXECUTE( (db) => {
     api.removeUserFromGroup(userID, channelID);
     api.sendMessage({body: "Leaving that channel"}, userID);
