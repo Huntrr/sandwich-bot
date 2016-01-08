@@ -21,6 +21,7 @@ facebook(config.credentials, (err, api) => {
   let kill = api.listen(function botListen(err, message) {
     if(err) return console.error(err);
 
+    api.setOptions({listenEvents: true});
 
     if(message.type === 'message' &&
        message.body.charAt(0) === config.commandCharacter) {
@@ -29,15 +30,24 @@ facebook(config.credentials, (err, api) => {
         let cmd = args[0];
         args.shift();
 
+        let valid = false;
         _.each(commands, (command) => {
-          if(command.cmd === cmd) {
+          if(command.cmd.toLowerCase() === cmd.toLowerCase()) {
             // the command matches
+            valid = true;
             command.handler(api, args, message);
           }
         });
+
+        if(!valid) {
+          api.sendMessage({body: `Unknown command ${cmd}`}, message.senderID);
+        }
     } else {
       // runs each middleware with the API as the first argument, MESSAGE as next
       _.each(middlewares, (middleware) => middleware(api, message));
+
+      console.log(`Received event: ${message}`);
+      console.table(message);
     }
 
   });

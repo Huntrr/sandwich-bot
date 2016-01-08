@@ -15,26 +15,28 @@ let bot = new Cleverbot;
 Cleverbot.prepare(() => canListen = true);
 
 module.exports.onMessage = (api, message) => {
-  if(message.body.toLowerCase() === 'wake up' && !listening) {
-    if(!canListen) {
-      api.sendMessage({body: 'Zzzzzz... Not yet, mom!'}, message.threadID);
-    } else {
-      listening = true;
-      api.sendMessage({body: 'Good morning!'}, message.threadID);
-    }
-  } else if(message.body.toLowerCase() === 'shut up') {
-    if(listening) {
-      listening = false;
-      api.sendMessage({body: '... Fine. Shutting up.'}, message.threadID);
-    } else {
-      api.sendMessage({body: 'I CAN\'T SHUT UP TWICE'}, message.threadID);
-    }
+  if(message.type === 'message') {
+    if(message.body.toLowerCase() === 'wake up' && !listening) {
+      if(!canListen) {
+        api.sendMessage({body: 'Zzzzzz... Not yet, mom!'}, message.threadID);
+      } else {
+        listening = true;
+        api.sendMessage({body: 'Good morning!'}, message.threadID);
+      }
+    } else if(message.body.toLowerCase() === 'shut up') {
+      if(listening) {
+        listening = false;
+        api.sendMessage({body: '... Fine. Shutting up.'}, message.threadID);
+      } else {
+        api.sendMessage({body: 'I CAN\'T SHUT UP TWICE'}, message.threadID);
+      }
 
-  } else if(listening && canListen) {
-    bot.write(message.body, (response) => {
-      console.log(`Cleverbot response: ${response}`);
-      api.sendMessage({body: response.message}, message.threadID);
-    });
-  }
+    } else if(listening && canListen) {
+      bot.write(message.body, (response) => {
+        console.log(`Cleverbot response: ${response}`);
+        api.sendMessage({body: response.message}, message.threadID);
+      });
+    }
     
+  }
 };
