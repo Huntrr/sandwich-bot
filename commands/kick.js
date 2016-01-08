@@ -25,8 +25,8 @@ module.exports.onInit = (api) => myID = api.getCurrentUserID();
 
 module.exports.handler = (api, args, message) => {
   
-  Users.hasPerm(message.threadID, message.senderID, "mod", (result) => {
-    if(!result) {
+  Users.hasPerm(message.threadID, message.senderID, "mod", (isMod) => {
+    if(!isMod) {
       return api.sendMessage({body: "You don't have permission to do that!"},
                              message.threadID);
     }
@@ -57,10 +57,17 @@ module.exports.handler = (api, args, message) => {
                           message.threadID);
         }
 
-        api.sendMessage({body: `Alright, kicking ${user.name}`},
-                        message.threadID);
+        Users.hasPerm(message.threadID, user.id, "unkickable", (cantKick) => {
+          if(cantKick) {
+            return api.sendMessage({body: `Whoops, ${user.name} is unkickable`},
+                                   message.threadID);
+          }
 
-        api.removeUserFromGroup(user.id, message.threadID);
+          api.sendMessage({body: `Alright, kicking ${user.name}`},
+                          message.threadID);
+
+          api.removeUserFromGroup(user.id, message.threadID);
+        }
       }
     });
   });
