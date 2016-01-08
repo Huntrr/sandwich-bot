@@ -22,7 +22,7 @@ EXECUTE((db) => {
         "users": [
           {
             "userID": parseInt(config.owner) || 0,
-            "name": parseInt(config.ownerName) || "admin",
+            "name": config.ownerName || "admin",
             "perms": ['op']
           }
         ]
