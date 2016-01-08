@@ -2,10 +2,15 @@
   "name": "sandwich-bot",
   "version": "1.0.0",
   "description": "A little Facebook chatbot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Huntrr/sandwich-bot"
+  },
   "main": "sandwich.js",
   "author": "Hunter Lightman",
   "license": "MIT",
   "dependencies": {
+    "async": "^1.5.2",
     "cleverbot-node": "^0.2.1",
     "console.table": "^0.4.0",
     "facebook-chat-api": "^1.0.4",
