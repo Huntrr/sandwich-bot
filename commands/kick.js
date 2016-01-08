@@ -67,7 +67,7 @@ module.exports.handler = (api, args, message) => {
                           message.threadID);
 
           api.removeUserFromGroup(user.id, message.threadID);
-        }
+        });
       }
     });
   });
