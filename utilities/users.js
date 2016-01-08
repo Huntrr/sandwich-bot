@@ -21,8 +21,8 @@ EXECUTE((db) => {
         "threadID": -1,
         "users": [
           {
-            "userID": process.env.OWNER || config.owner || 1096540724,
-            "name": process.env.OWNER_NAME || config.ownerName || "admin",
+            "userID": parseInt(config.owner) || 0,
+            "name": parseInt(config.ownerName) || "admin",
             "perms": ['op']
           }
         ]
