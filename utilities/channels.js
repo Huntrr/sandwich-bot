@@ -64,9 +64,6 @@ module.exports.setChannelName = (channelID, newName, api) => {
                                 `named ${newName}`}, channelID);
         }
 
-        return api.sendMessage( {body: `Changing channel name to ${newName}.`},
-                                channelID);
-
         db.collection('channels').update({ _id: channelID },
                                        { $set: 
                                          { 
@@ -88,6 +85,9 @@ module.exports.setChannelName = (channelID, newName, api) => {
                                              users: []
                                            });
                                          }
+
+        return api.sendMessage( {body: `Changing channel name to ${newName}.`},
+                                channelID);
                                        });
     });
   });
