@@ -54,16 +54,25 @@ module.exports.getChannelName = (channelID, cb) => {
 module.exports.setChannelName = (channelID, newName, api) => {
   channelID = parseInt(channelID);
   EXECUTE( (db) => {
-    db.collection('channels').find({ name: newName }).count( (err, count) => {
-      if(err) return console.error(err);
+    db.collection('channels').find(
+      { $or: [ {name: newName}, {lowerName: newName.toLowerCase()} ] })
+      .count( (err, count) => {
+        if(err) return console.error(err);
 
-      if(count > 0) {
-        return api.sendMessage( {body: `There's already a channel ` +
-                              `named ${newName}`}, channelID);
-      }
+        if(count > 0) {
+          return api.sendMessage( {body: `There's already a channel ` +
+                                `named ${newName}`}, channelID);
+        }
 
-      db.collection('channels').update({ _id: channelID },
-                                       { $set: { name: newName } },
+        return api.sendMessage( {body: `Changing channel name to ${newName}.`},
+                                channelID);
+
+        db.collection('channels').update({ _id: channelID },
+                                       { $set: 
+                                         { 
+                                           name: newName,
+                                           lowerName: newName.toLowerCase() 
+                                       } },
                                        (err, result) => {
                                          if(err) return console.error(err);
                                          
@@ -74,6 +83,7 @@ module.exports.setChannelName = (channelID, newName, api) => {
                                            db.collection('channels').insertOne({
                                              _id: channelID,
                                              name: newName,
+                                             lowerName: newName.toLowerCase(),
                                              hidden: true,
                                              users: []
                                            });
@@ -170,34 +180,36 @@ module.exports.joinChannel = (api, channelName, userID, password) => {
   userID = parseInt(userID);
 
   EXECUTE( (db) => {
-    db.collection('channels').findOne({name: channelName}, (err, channel) => {
-      if(!channel) {
-        db.close();
-        return api.sendMessage({body: `No channel named ${channelName}`},
-                               userID);
-      }
+    db.collection('channels').findOne(
+      { $or: [ {name: channelName}, {lowerName: channelName.toLowerCase()} ] },
+        (err, channel) => {
+        if(!channel) {
+          db.close();
+          return api.sendMessage({body: `No channel named ${channelName}`},
+                                 userID);
+        }
 
-      if(_.contains(channel.banned, userID)) {
-        db.close();
-        return api.sendMessage(
-          {body: `Sorry, you've been banned from ${channelName}`}, userID
-        );
-      }
+        if(_.contains(channel.banned, userID)) {
+          db.close();
+          return api.sendMessage(
+            {body: `Sorry, you've been banned from ${channelName}`}, userID
+          );
+        }
 
-      if(!channel.password || channel.password === password) {
-        db.close();
-        api.sendMessage({body: `Joining ${channelName}`}, userID);
-        api.addUserToGroup(userID, channel._id, (err) => {
-          if(err) return api.sendMessage({body: `Error: ${err}`}, userID);
-        });
-      } else {
-        db.close();
-        let msg = password ? `Invalid password for ${channelName}` :
-          `Please enter a password while joining ${channelName}`;
+        if(!channel.password || channel.password === password) {
+          db.close();
+          api.sendMessage({body: `Joining ${channelName}`}, userID);
+          api.addUserToGroup(userID, channel._id, (err) => {
+            if(err) return api.sendMessage({body: `Error: ${err}`}, userID);
+          });
+        } else {
+          db.close();
+          let msg = password ? `Invalid password for ${channelName}` :
+            `Please enter a password while joining ${channelName}`;
 
-        return api.sendMessage({body: msg},
-                               userID);
-      }
+          return api.sendMessage({body: msg},
+                                 userID);
+        }
     });
   });
 }

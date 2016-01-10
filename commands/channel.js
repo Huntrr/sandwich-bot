@@ -89,8 +89,6 @@ module.exports.handler = (api, args, message) => {
         let newName = args[0];
 
         Channels.setChannelName(message.threadID, newName, api);
-        api.sendMessage({body: `Setting name to "${newName}"`},
-                        message.threadID);
         break;
 
       case "setdesc":
