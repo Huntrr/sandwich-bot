@@ -2,6 +2,7 @@
 'use strict';
 
 const findUser = require('./../utilities/findUser');
+const _ = require('underscore');
 
 module.exports.command = 'slap';
 
