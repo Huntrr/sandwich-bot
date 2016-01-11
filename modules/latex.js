@@ -8,8 +8,17 @@
  */
 
 const _ = require('underscore');
+const fs = require('fs');
+
+const packages = ["amsmath", "amssymb"];
 
 const Mathmode = require('mathmode');
+
+let i = 0;
+let nexti = () => {
+  i++;
+  return i;
+};
 
 let LatexReader = function(text) {
   let curIndex = 0;
@@ -22,9 +31,7 @@ let LatexReader = function(text) {
 
       let next$ = text.indexOf('$', first$ + 1);
 
-      while(next$ === text.indexOf('\$', first$ + 1) + 1) {
-        if(next$ < 0) return '';
-
+      while(text.charAt(next$ - 1) === '\\') {
         next$ = text.indexOf('$', next$ + 1);
       }
 
@@ -45,16 +52,25 @@ module.exports.onMessage = (api, message) => {
   if(message.type === 'message' && /\$(\\\$|[^\$])+\$/.test(message.body)) {
     let reader = LatexReader(message.body);
 
-    let cur = reader.next();
+    let postNextEquation = function(cur) {
+      if(cur === '') return;
+      
+      let filename = __dirname + `/../tmp/file${nexti()}.png`;
+      Mathmode(cur, { packages: packages })
+        .pipe(fs.createWriteStream(filename))
+        .on('finish', () => {
+          let msg = {
+            attachment: fs.createReadStream(filename)
+          };
 
-    while(cur != '') {
-      let msg = {
-        attachment: Mathmode(cur, {packages: ["amsmath", "amssymb"]})
-      }
+          api.sendMessage(msg, id, () => postNextEquation(reader.next()));
 
-      api.sendMessage(msg, id);
-
-      cur = reader.next();
+          fs.unlink(filename, function(err) {
+            if(err) return console.error(err);
+          });
+        });
     }
+
+    postNextEquation(reader.next());
   }
 };
