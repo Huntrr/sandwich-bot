@@ -9,42 +9,52 @@
 
 const _ = require('underscore');
 
-let listening = {};
-let canListen = false;
+const Mathmode = require('mathmode');
 
-const Cleverbot = require('cleverbot-node');
-let bot = new Cleverbot;
-Cleverbot.prepare(() => canListen = true);
+let LatexReader = function(text) {
+  let curIndex = 0;
+
+  let self = {
+    next() {
+      let first$ = text.indexOf('$', curIndex);
+
+      if(first$ < 0) return '';
+
+      let next$ = text.indexOf('$', first$ + 1);
+
+      while(next$ === text.indexOf('\$', first$ + 1) + 1) {
+        if(next$ < 0) return '';
+
+        next$ = text.indexOf('$', next$ + 1);
+      }
+
+      if(next$ < 0) return '';
+
+      curIndex = next$ + 1;
+
+      return text.substring(first$ + 1, next$);
+    }
+  };
+
+  return self;
+};
 
 module.exports.onMessage = (api, message) => {
   let id = message.threadID;
 
-  if(!_.has(listening, id)) {
-    listening[id] = false;
-  }
+  if(message.type === 'message' && /\$(\\\$|[^\$])+\$/.test(message.body)) {
+    let reader = LatexReader(message.body);
 
-  if(message.type === 'message') {
-    if(message.body.toLowerCase() === 'wake up' && !listening[id]) {
-      if(!canListen) {
-        api.sendMessage({body: 'Zzzzzz... Not yet, mom!'}, message.threadID);
-      } else {
-        listening[id] = true;
-        api.sendMessage({body: 'Good morning!'}, message.threadID);
-      }
-    } else if(message.body.toLowerCase() === 'shut up') {
-      if(listening[id]) {
-        listening[id] = false;
-        api.sendMessage({body: '... Fine. Shutting up.'}, message.threadID);
-      } else {
-        api.sendMessage({body: 'I CAN\'T SHUT UP TWICE'}, message.threadID);
+    let cur = reader.next();
+
+    while(cur != '') {
+      let msg = {
+        attachment: Mathmode(cur, {packages: ["amsmath", "amssymb"]})
       }
 
-    } else if(listening[id] && canListen) {
-      bot.write(message.body, (response) => {
-        console.log(`Cleverbot response: ${response}`);
-        api.sendMessage({body: response.message}, message.threadID);
-      });
+      api.sendMessage(msg, id);
+
+      cur = reader.next();
     }
-    
   }
 };
