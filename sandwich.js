@@ -1,7 +1,5 @@
 'use strict';
 
-require('console.table');
-
 // imports
 const path = require('path');
 const _ = require('underscore');
