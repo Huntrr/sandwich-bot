@@ -13,7 +13,6 @@ const config = require('./bot/config');
 let docs = [];
 
 // load all modules in `modules` subfolder
-console.log('Setting up modules');
 let moduleFolder = path.join(__dirname, 'modules');
 
 fs.readdirSync(moduleFolder).forEach(function(file) {
@@ -38,7 +37,6 @@ fs.readdirSync(moduleFolder).forEach(function(file) {
 });
 
 // load all commands in `commands` subfolder
-console.log('Setting up commands');
 let commandFolder = path.join(__dirname, 'commands');
 
 fs.readdirSync(commandFolder).forEach(function(file) {

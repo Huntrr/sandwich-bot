@@ -36,7 +36,6 @@ module.exports.getChannelList = (cb) => {
 
 module.exports.getChannelName = (channelID, cb) => {
   channelID = parseInt(channelID);
-  console.log(channelID);
 
   EXECUTE( (db) => {
     db.collection('channels').findOne({ _id: channelID }, 
@@ -140,15 +139,12 @@ module.exports.setChannelPrivate = (channelID, hidden) => {
 
 module.exports.setChannelPassword = (channelID, password) => {
   channelID = parseInt(channelID);
-  console.log(password);
   EXECUTE( (db) => {
     if(password === undefined || password === "" || password === null) {
-      console.log("UNSETTING PASSWORD");
       db.collection('channels').update({ _id: channelID},
                                        { $unset: { password: "" } },
                                        () => db.close());
     } else {
-      console.log("SETTING PASSWORD");
       db.collection('channels').update({ _id: channelID},
                                        { $set: { password: password } },
                                        () => db.close());

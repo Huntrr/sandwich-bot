@@ -145,7 +145,6 @@ module.exports.handler = (api, args, message) => {
         let newPass = "";
         if(args.length > 0) {
           newPass = args[0];
-          console.log("NEW PASSWORD: " + newPass);
         }
 
         Channels.setChannelPassword(message.threadID, newPass);

@@ -45,9 +45,6 @@ facebook(config.credentials, (err, api) => {
     } else {
       // runs each middleware with the API as the first argument, MESSAGE as next
       _.each(middlewares, (middleware) => middleware(api, message));
-
-      console.log(`Received event: ${message}`);
-      console.table(message);
     }
 
   });

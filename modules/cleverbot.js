@@ -41,7 +41,6 @@ module.exports.onMessage = (api, message) => {
 
     } else if(listening[id] && canListen) {
       bot.write(message.body, (response) => {
-        console.log(`Cleverbot response: ${response}`);
         api.sendMessage({body: response.message}, message.threadID);
       });
     }
